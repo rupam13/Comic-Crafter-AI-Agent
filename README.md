@@ -4,7 +4,7 @@
 [![Tech Stack](https://img.shields.io/badge/Tech-React%20%26%20Gemini%20API-brightgreen)](https://ai.google.dev/)
 [![Made with Love](https://img.shields.io/badge/Made%20with-Love-red)](https://github.com/your-username/comic-crafter-ai)
 
-**Create dynamic, character-consistent comic strips in minutes with the power of AI. Define your character, write your story, and watch as the Google Gemini API brings your vision to life, panel by panel.**
+
 <img width="1447" height="576" alt="image" src="https://github.com/user-attachments/assets/69fca98a-a551-4b05-932a-1012d00f17ea" />
 
 
