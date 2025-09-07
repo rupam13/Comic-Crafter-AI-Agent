@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { Character, StoryPanel, GeneratedPanel, DialogueEntry } from '../types';
 
 if (!process.env.API_KEY) {
@@ -98,46 +98,94 @@ export async function generateStoryFromPrompt(character: Character, prompt: stri
     }
 }
 
+/**
+ * Generates an image for a single comic panel, optionally using a previous panel's image for consistency.
+ * This function is exported for use in both initial generation and for retrying a failed panel.
+ * @param character The character definition.
+ * @param panel The storyboard data for the panel.
+ * @param previousPanelImageUrl The data URL of the previously generated successful image.
+ * @returns A promise that resolves to the data URL of the newly generated image.
+ */
+export async function regenerateSinglePanel(
+  character: Character, 
+  panel: StoryPanel, 
+  previousPanelImageUrl?: string
+): Promise<string> {
+  const textPrompt = `
+    A comic book panel featuring a character named ${character.name}.
+    **Consistent Character Description**: "${character.description}".
+    **Art Style**: Modern digital comic art, vibrant colors, clean lines, dynamic shading, cinematic composition.
+    **Scene**: ${panel.scene}
+    **Character Expression/Action**: ${panel.expression}
+    The character's appearance should be consistent with the provided image if one is present.
+    Do not include any text, speech bubbles, or captions in the image.
+  `;
 
-export async function generateComicPanels(character: Character, panels: StoryPanel[]): Promise<GeneratedPanel[]> {
-  try {
-    const imageGenerationPromises = panels.map(async (panel) => {
-      const prompt = `
-        A comic book panel featuring a character named ${character.name}.
-        **Consistent Character Description**: "${character.description}".
-        **Art Style**: Modern digital comic art, vibrant colors, clean lines, dynamic shading, cinematic composition.
-        **Scene**: ${panel.scene}
-        **Character Expression/Action**: ${panel.expression}
-        Do not include any text, speech bubbles, or captions in the image.
-      `;
+  const parts: any[] = [{ text: textPrompt }];
 
-      const response = await ai.models.generateImages({
-        model: 'imagen-4.0-generate-001',
-        prompt: prompt,
-        config: {
-          numberOfImages: 1,
-          outputMimeType: 'image/jpeg',
-          aspectRatio: '1:1',
+  if (previousPanelImageUrl && previousPanelImageUrl.startsWith('data:image')) {
+    const [header, base64Data] = previousPanelImageUrl.split(',');
+    const mimeType = header.match(/:(.*?);/)?.[1];
+    if (base64Data && mimeType) {
+      parts.unshift({
+        inlineData: {
+          data: base64Data,
+          mimeType: mimeType,
         },
       });
-      
-      const base64ImageBytes = response.generatedImages[0].image.imageBytes;
-      const imageUrl = `data:image/jpeg;base64,${base64ImageBytes}`;
-      
-      return {
+    }
+  }
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash-image-preview',
+    contents: { parts },
+    config: {
+      responseModalities: [Modality.IMAGE, Modality.TEXT],
+    },
+  });
+
+  if (response.candidates && response.candidates.length > 0) {
+    for (const part of response.candidates[0].content.parts) {
+      if (part.inlineData) {
+        return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+      }
+    }
+  }
+
+  // If we get here, no image was returned.
+  throw new Error(`The AI failed to generate an image. Please try rephrasing the scene description or try again.`);
+}
+
+
+/**
+ * Generates all comic panels based on the storyboard. If a panel fails to generate,
+ * it is marked with an error, but the process continues for subsequent panels.
+ * @param character The character definition.
+ * @param panels The array of storyboard panels.
+ * @returns A promise that resolves to an array of GeneratedPanel objects.
+ */
+export async function generateComicPanels(character: Character, panels: StoryPanel[]): Promise<GeneratedPanel[]> {
+  const generatedPanels: GeneratedPanel[] = [];
+  let lastSuccessfulImage: string | undefined = undefined;
+
+  for (const panel of panels) {
+    try {
+      // Use the regeneration function for each panel to reduce code duplication.
+      const imageUrl = await regenerateSinglePanel(character, panel, lastSuccessfulImage);
+      generatedPanels.push({
         ...panel,
         imageUrl,
-      };
-    });
-
-    const generatedPanels = await Promise.all(imageGenerationPromises);
-    return generatedPanels;
-
-  } catch (error) {
-    console.error("Error generating comic panels:", error);
-    if (error instanceof Error) {
-        throw new Error(`Failed to generate comic panels: ${error.message}`);
+      });
+      lastSuccessfulImage = imageUrl; // Update on success
+    } catch (error) {
+      console.error(`Error generating image for panel scene "${panel.scene}":`, error);
+      generatedPanels.push({
+        ...panel,
+        imageUrl: 'ERROR', // Special identifier for a failed panel
+      });
+      // Do NOT update lastSuccessfulImage, so the next panel uses the previous successful one for consistency.
     }
-    throw new Error("An unknown error occurred during comic generation.");
   }
+
+  return generatedPanels;
 }

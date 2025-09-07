@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState, useCallback, useEffect } from 'react';
 import type { Character, StoryPanel, GeneratedPanel, AppView } from './types';
-import { generateComicPanels } from './services/geminiService';
+import { generateComicPanels, regenerateSinglePanel } from './services/geminiService';
 import { Header } from './components/Header';
 import { CharacterInput } from './components/CharacterInput';
 import { StoryboardInput } from './components/StoryboardInput';
@@ -15,6 +15,7 @@ const App: React.FC = () => {
   const [generatedComic, setGeneratedComic] = useState<GeneratedPanel[] | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryingPanelId, setRetryingPanelId] = useState<string | null>(null);
 
   const handleCharacterSubmit = useCallback((char: Character) => {
     setCharacter(char);
@@ -30,14 +31,49 @@ const App: React.FC = () => {
       const comic = await generateComicPanels(character, panels);
       setGeneratedComic(comic);
       setView('comic');
-    // Fix: Added braces around the catch block to correct the syntax. This resolves all subsequent scope-related compilation errors.
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred.');
-      // Stay on the storyboard view if there's an error
     } finally {
       setIsLoading(false);
     }
   }, [character]);
+  
+  const handleRetryPanel = useCallback(async (panelIdToRetry: string) => {
+    if (!character || !generatedComic) return;
+
+    setRetryingPanelId(panelIdToRetry);
+    setError(null);
+
+    try {
+      const panelIndex = generatedComic.findIndex(p => p.id === panelIdToRetry);
+      if (panelIndex === -1) throw new Error("Panel not found");
+
+      const panelToRetry = generatedComic[panelIndex];
+
+      // Find the last successful image URL for consistency.
+      // Loop backwards from the current panel's index.
+      let previousImageUrl: string | undefined = undefined;
+      for (let i = panelIndex - 1; i >= 0; i--) {
+        if (generatedComic[i].imageUrl !== 'ERROR') {
+          previousImageUrl = generatedComic[i].imageUrl;
+          break;
+        }
+      }
+
+      const newImageUrl = await regenerateSinglePanel(character, panelToRetry, previousImageUrl);
+      
+      // Update state immutably
+      const updatedComic = generatedComic.map(p => 
+        p.id === panelIdToRetry ? { ...p, imageUrl: newImageUrl } : p
+      );
+      setGeneratedComic(updatedComic);
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred during retry.');
+    } finally {
+      setRetryingPanelId(null);
+    }
+  }, [character, generatedComic]);
 
   const handleStartOver = useCallback(() => {
     setView('character');
@@ -52,8 +88,6 @@ const App: React.FC = () => {
     setView('character');
   }, []);
 
-  // Fix: Added a useEffect hook to handle inconsistent states (e.g., being on the storyboard view without a character).
-  // This prevents calling state setters during render, which is a React anti-pattern.
   useEffect(() => {
     if ((view === 'storyboard' && !character) || (view === 'comic' && (!character || !generatedComic))) {
       handleStartOver();
@@ -68,7 +102,6 @@ const App: React.FC = () => {
         if (character) {
           return <StoryboardInput character={character} onStoryboardSubmit={handleStoryboardSubmit} onBack={handleBackToCharacter} />;
         }
-        // Fallback to character input if character is null is now handled by useEffect. Return null to prevent rendering during state transition.
         return null;
       case 'comic':
         if (character && generatedComic) {
@@ -78,10 +111,11 @@ const App: React.FC = () => {
               comicTitle={comicTitle}
               generatedComic={generatedComic}
               onStartOver={handleStartOver}
+              onRetryPanel={handleRetryPanel}
+              retryingPanelId={retryingPanelId}
             />
           );
         }
-         // Fallback if data is missing is now handled by useEffect. Return null to prevent rendering during state transition.
         return null;
       default:
         return <CharacterInput onCharacterSubmit={handleCharacterSubmit} />;
@@ -95,8 +129,11 @@ const App: React.FC = () => {
       <main className="mt-8">
         {error && (
             <div className="w-full max-w-2xl mx-auto bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg relative mb-6" role="alert">
-                <strong className="font-bold">System Error: </strong>
+                <strong className="font-bold">Error: </strong>
                 <span className="block sm:inline">{error}</span>
+                 <button onClick={() => setError(null)} className="absolute top-0 bottom-0 right-0 px-4 py-3" aria-label="Close">
+                    <svg className="fill-current h-6 w-6 text-red-300" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
+                </button>
             </div>
         )}
         {renderContent()}
