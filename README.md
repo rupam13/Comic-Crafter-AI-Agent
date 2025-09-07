@@ -6,7 +6,8 @@
 
 **Create dynamic, character-consistent comic strips in minutes with the power of AI. Define your character, write your story, and watch as the Google Gemini API brings your vision to life, panel by panel.**
 
-![Final Comic Showcase](./assets/screenshot-comic-showcase.png)
+<img width="2521" height="1430" alt="image" src="https://github.com/user-attachments/assets/db45ef4a-861b-4da5-a380-ff719bccd540" />
+
 _An example comic generated with the application._
 
 ---
