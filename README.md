@@ -1,4 +1,4 @@
-# 🎨 Comic Crafter AI
+[ai_policy_assistant.pdf](https://github.com/user-attachments/files/22196810/ai_policy_assistant.pdf)# 🎨 Comic Crafter AI
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Tech Stack](https://img.shields.io/badge/Tech-React%20%26%20Gemini%20API-brightgreen)](https://ai.google.dev/)
@@ -34,19 +34,39 @@ The application guides you through a simple three-step process to create your co
 
 This is where your story begins. Give your character a name and a detailed description. The more detail you provide about their appearance, outfit, and the desired art style, the more consistent the AI-generated images will be.
 
-![Step 1: Character Definition](./assets/screenshot-character.png)
+<img width="2521" height="1430" alt="image" src="https://github.com/user-attachments/assets/cd9508a8-015d-44db-800a-fce947589b69" />
+
 
 ### Step 2: Construct the Narrative
 
 Craft the story panel by panel. You can write everything manually or use the **AI Narrative Assistant**. Simply provide a story idea, and the AI will generate a complete storyboard for you to edit and refine.
 
-![Step 2: Storyboard Creation](./assets/screenshot-storyboard.png)
+<img width="2508" height="1379" alt="image" src="https://github.com/user-attachments/assets/171337ce-b983-4253-accc-bd09465c5cca" />
+<img width="1269" height="1541" alt="image" src="https://github.com/user-attachments/assets/55c82dc2-5012-476e-9cc4-1a22ec6b3de3" />
+<img width="813" height="1110" alt="image" src="https://github.com/user-attachments/assets/5901a5fd-c9a6-47a2-8d5e-107d427ca363" />
+<img width="1378" height="729" alt="image" src="https://github.com/user-attachments/assets/cebefba6-2fbf-43d3-a857-210a113b635a" />
+
+<img width="1023" height="1105" alt="image" src="https://github.com/user-attachments/assets/9eb28caa-6ec7-4eaf-aa45-2330770b2a21" />
+
+
+
+
+
 
 ### Step 3: Generate & View Your Comic
 
+-[ai_policy_assistant.pdf](https://github.com/user-attachments/files/22196811/ai_policy_assistant.pdf)
+
+Video Link :
+
+
+https://github.com/user-attachments/assets/bf84b842-271b-4c1c-b02b-92f4247b3d05
+
+
+
 With your storyboard complete, click "Generate My Comic!". The application sends your detailed prompts to the AI, which generates an image for each panel sequentially. Your final comic is then beautifully displayed, ready for you to review, retry failed panels, and download.
 
-![Step 3: Final Comic Viewer](./assets/screenshot-comic-viewer.png)
+
 
 ## 🛠️ Tech Stack
 
