@@ -74,8 +74,7 @@ To run this project on your local machine, follow these steps.
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/comic-crafter-ai.git
-    cd comic-crafter-ai
+    git clone https://github.com/rupam13/Comic-Crafter-AI-Agent
     ```
 
 2.  **Install dependencies:**
