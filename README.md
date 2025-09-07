@@ -1,4 +1,4 @@
- 🎨 Comic Crafter AI
+                                                                 🎨 Comic Crafter AI
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Tech Stack](https://img.shields.io/badge/Tech-React%20%26%20Gemini%20API-brightgreen)](https://ai.google.dev/)
